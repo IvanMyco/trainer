@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Trainer">
+<title>Personal Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0a0a0a;--bg2:#141414;--bg3:#1c1c1c;--bg4:#252525;
+  --txt:#f0f0ee;--txt2:#a0a09e;--txt3:#505050;
+  --acc:#e8ff3a;--acc2:#ff6b35;--acc3:#3affb8;
+  --bdr:#222;
+  --font:'DM Mono',monospace;
+  --safe-top:env(safe-area-inset-top,0px);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
+}
+html,body{height:100%;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;overflow:hidden}
+.app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:var(--bg)}
+.topbar{padding:calc(48px + var(--safe-top)) 18px 12px;flex-shrink:0;display:flex;justify-content:space-between;align-items:flex-end}
+.topbar-sub{font-size:10px;letter-spacing:.14em;color:var(--txt3);text-transform:uppercase}
+.topbar-title{font-size:22px;font-weight:500;color:var(--txt);margin-top:2px}
+.sync-btn{background:none;border:1px solid var(--bdr);border-radius:8px;padding:7px 12px;color:var(--txt3);font-family:var(--font);font-size:11px;cursor:pointer;display:flex;align-items:center;gap:6px;transition:border-color .15s;flex-shrink:0}
+.sync-btn:active{border-color:var(--acc);color:var(--acc)}
+.sync-btn.syncing i{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.scroll-area{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding:0 0 8px}
+.scroll-area::-webkit-scrollbar{display:none}
+.nav{display:flex;justify-content:space-around;padding:10px 0;padding-bottom:calc(10px + var(--safe-bottom));background:var(--bg2);border-top:1px solid var(--bdr);flex-shrink:0}
+.nav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 16px;cursor:pointer;color:var(--txt3);border:none;background:none;font-family:var(--font);transition:color .15s}
+.nav-btn.active{color:var(--acc)}
+.nav-btn i{font-size:22px}
+.nav-btn span{font-size:9px;letter-spacing:.08em;text-transform:uppercase}
+.section{display:none;padding:14px 16px 20px}
+.section.active{display:block}
+.sec-label{font-size:10px;letter-spacing:.12em;color:var(--txt3);text-transform:uppercase;margin-bottom:10px;margin-top:18px}
+.sec-label:first-child{margin-top:0}
+.view-toggle{display:flex;gap:6px;margin-bottom:16px}
+.vt-btn{flex:1;padding:8px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;font-family:var(--font);font-size:11px;color:var(--txt3);cursor:pointer;text-transform:uppercase;letter-spacing:.06em;transition:all .12s;display:flex;align-items:center;justify-content:center;gap:5px}
+.vt-btn.active{background:var(--bg4);border-color:var(--acc);color:var(--acc)}
+
+/* CALENDAR */
+.cal-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.cal-lbl{font-size:15px;font-weight:500}
+.cal-arrow{background:none;border:1px solid var(--bdr);border-radius:6px;color:var(--txt2);padding:5px 12px;cursor:pointer;font-family:var(--font);font-size:15px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{text-align:center;font-size:9px;letter-spacing:.07em;color:var(--txt3);text-transform:uppercase;padding:3px 0 6px}
+.cal-day{aspect-ratio:1;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:8px;cursor:pointer;gap:2px}
+.cal-day-num{font-size:12px;color:var(--txt2);line-height:1}
+.cal-day.other-month .cal-day-num{color:var(--txt3);opacity:.3}
+.cal-day.is-today .cal-day-num{color:var(--acc);font-weight:500}
+.cal-day.is-today{border:1px solid rgba(232,255,58,.18)}
+.cal-day.is-selected{background:var(--acc)}
+.cal-day.is-selected .cal-day-num{color:#0a0a0a;font-weight:500}
+.cal-day.is-selected .cal-dot{background:#0a0a0a!important}
+.cal-dot{width:4px;height:4px;border-radius:50%}
+
+/* WEEK */
+.week-strip{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:18px}
+.wk-col{display:flex;flex-direction:column;align-items:center;gap:5px}
+.wk-dow{font-size:9px;letter-spacing:.07em;color:var(--txt3);text-transform:uppercase}
+.wk-bub{width:100%;aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:11px;font-weight:500;border:1px solid transparent;transition:all .12s}
+.wk-bub.is-today{outline:1.5px solid var(--acc);outline-offset:2px}
+.wk-bub.is-selected{border-color:var(--acc)!important;color:var(--acc)!important}
+.wk-bub.t-boxe{background:#12122a;color:#6b8cff;border-color:#6b8cff22}
+.wk-bub.t-gym,.wk-bub.t-palestra{background:#0d1f10;color:var(--acc3);border-color:#3affb822}
+.wk-bub.t-crossfit,.wk-bub.t-cf{background:#1f1008;color:var(--acc2);border-color:#ff6b3522}
+.wk-bub.t-recupero,.wk-bub.t-riposo{background:var(--bg3);color:var(--txt3)}
+
+/* DAY CARD */
+.day-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;overflow:hidden;margin-top:14px}
+.day-card-head{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.day-badge{font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:3px 10px;border-radius:20px;display:inline-block;white-space:nowrap}
+.db-boxe{background:#12122a;color:#6b8cff;border:1px solid #6b8cff30}
+.db-gym,.db-palestra{background:#0d1f10;color:var(--acc3);border:1px solid #3affb830}
+.db-crossfit,.db-cf{background:#1f1008;color:var(--acc2);border:1px solid #ff6b3530}
+.db-recupero,.db-riposo{background:var(--bg3);color:var(--txt3);border:1px solid var(--bdr)}
+.day-card-title{font-size:15px;font-weight:500;margin-top:5px}
+.day-card-sub{font-size:11px;color:var(--txt3);margin-top:2px}
+.open-btn{background:var(--acc);border:none;border-radius:8px;padding:9px 14px;font-family:var(--font);font-size:10px;font-weight:500;letter-spacing:.08em;color:#0a0a0a;cursor:pointer;text-transform:uppercase;white-space:nowrap;flex-shrink:0}
+.ex-list{border-top:1px solid var(--bdr)}
+.ex-row{display:flex;justify-content:space-between;align-items:baseline;padding:9px 16px;border-bottom:1px solid var(--bdr)}
+.ex-row:last-child{border-bottom:none}
+.ex-row-name{font-size:13px;color:var(--txt)}
+.ex-row-params{font-size:11px;color:var(--txt3);text-align:right;margin-left:8px;flex-shrink:0}
+.empty-state{padding:28px 16px;text-align:center;color:var(--txt3);font-size:12px;line-height:1.7}
+
+/* SCHEDA FULL */
+.back-btn{background:none;border:1px solid var(--bdr);border-radius:8px;padding:8px 14px;font-family:var(--font);font-size:11px;color:var(--txt2);cursor:pointer;display:flex;align-items:center;gap:6px;margin-bottom:16px}
+.ex-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:15px 16px;margin-bottom:10px}
+.ex-card-name{font-size:14px;font-weight:500;margin-bottom:4px}
+.ex-card-params{font-size:12px;color:var(--txt2);margin-bottom:8px}
+.ex-card-desc{font-size:11px;color:var(--txt3);line-height:1.65;margin-bottom:10px}
+.ex-card-yt{font-size:10px;color:#6b8cff;letter-spacing:.06em;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.log-fields{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--bdr)}
+.log-field label{font-size:9px;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase;display:block;margin-bottom:4px}
+.log-input{width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:6px;padding:8px;font-size:13px;color:var(--txt);font-family:var(--font);text-align:center}
+.btn-primary{background:var(--acc);color:#0a0a0a;border:none;border-radius:10px;padding:13px;font-family:var(--font);font-size:12px;font-weight:500;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;width:100%;margin-top:10px}
+.btn-ghost{background:transparent;border:1px solid var(--bdr);border-radius:10px;padding:12px;font-family:var(--font);font-size:11px;color:var(--txt2);cursor:pointer;width:100%;margin-top:8px}
+
+/* DIETA */
+.diet-day-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.diet-day-lbl{font-size:15px;font-weight:500}
+.diet-type-badge{display:inline-block;margin-bottom:14px}
+.meal-card{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.meal-orario{font-size:10px;color:var(--txt3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
+.meal-nome{font-size:14px;font-weight:500;margin-bottom,10px;line-height:1.4;margin-bottom:10px}
+.meal-macros{display:flex;gap:8px;flex-wrap:wrap}
+.macro-pill{background:var(--bg3);border-radius:6px;padding:4px 9px;font-size:11px;color:var(--txt2)}
+.macro-pill b{color:var(--txt);font-weight:500}
+.meal-note{font-size:11px;color:var(--txt3);margin-top:8px;font-style:italic;line-height:1.5}
+.totale-row{background:var(--bg3);border-radius:10px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;margin-top:4px;flex-wrap:wrap;gap:4px}
+
+/* PROGRESSI */
+.pr-block{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;overflow:hidden;margin-bottom:12px}
+.pr-row{display:flex;justify-content:space-between;align-items:center;padding:11px 16px;border-bottom:1px solid var(--bdr)}
+.pr-row:last-child{border-bottom:none}
+.pr-label{font-size:13px;color:var(--txt2)}
+.pr-val{font-size:13px;font-weight:500;color:var(--acc)}
+.peso-big{font-size:44px;font-weight:500;color:var(--acc)}
+.input-row{display:flex;gap:8px;margin-bottom:16px}
+.text-input{flex:1;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:var(--font);font-size:14px}
+
+/* SETTINGS */
+.config-panel{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:16px;margin-bottom:16px}
+.config-label{font-size:10px;letter-spacing:.1em;color:var(--txt3);text-transform:uppercase;margin-bottom:6px;display:block}
+.config-input{width:100%;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;padding:10px 12px;color:var(--txt);font-family:var(--font);font-size:12px;margin-bottom:10px}
+.config-hint{font-size:11px;color:var(--txt3);line-height:1.65;margin-top:-4px;margin-bottom:10px}
+
+.toast{position:fixed;bottom:calc(80px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(16px);background:var(--acc);color:#0a0a0a;padding:10px 20px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:all .22s;pointer-events:none;white-space:nowrap;z-index:999}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div>
+      <div class="topbar-sub">Personal trainer</div>
+      <div class="topbar-title" id="topbar-title">Agenda</div>
+    </div>
+    <button class="sync-btn" id="sync-btn" onclick="syncAll()">
+      <i class="ti ti-refresh" id="sync-icon"></i>
+      <span id="sync-label">Sync</span>
+    </button>
+  </div>
+
+  <div class="scroll-area" id="scroll-area">
+
+    <!-- AGENDA -->
+    <div id="sec-agenda" class="section active">
+      <div class="view-toggle">
+        <button class="vt-btn active" id="vt-mese" onclick="setCalView('mese')"><i class="ti ti-calendar-month" style="font-size:13px"></i> Mese</button>
+        <button class="vt-btn" id="vt-settimana" onclick="setCalView('settimana')"><i class="ti ti-calendar-week" style="font-size:13px"></i> Settimana</button>
+      </div>
+
+      <div id="view-mese">
+        <div class="cal-nav-row">
+          <button class="cal-arrow" onclick="changeMonth(-1)">‹</button>
+          <span class="cal-lbl" id="cal-month-lbl"></span>
+          <button class="cal-arrow" onclick="changeMonth(1)">›</button>
+        </div>
+        <div class="cal-grid" id="cal-grid">
+          <div class="cal-dow">Lun</div><div class="cal-dow">Mar</div><div class="cal-dow">Mer</div>
+          <div class="cal-dow">Gio</div><div class="cal-dow">Ven</div><div class="cal-dow">Sab</div><div class="cal-dow">Dom</div>
+        </div>
+        <div id="day-detail-mese"></div>
+      </div>
+
+      <div id="view-settimana" style="display:none">
+        <div class="cal-nav-row">
+          <button class="cal-arrow" onclick="changeWeek(-1)">‹</button>
+          <span class="cal-lbl" id="week-lbl"></span>
+          <button class="cal-arrow" onclick="changeWeek(1)">›</button>
+        </div>
+        <div class="week-strip" id="week-strip"></div>
+        <div id="day-detail-sett"></div>
+      </div>
+    </div>
+
+    <!-- SCHEDA -->
+    <div id="sec-scheda" class="section">
+      <button class="back-btn" onclick="goBack()"><i class="ti ti-arrow-left" style="font-size:14px"></i> Agenda</button>
+      <div id="scheda-content"></div>
+    </div>
+
+    <!-- DIETA -->
+    <div id="sec-dieta" class="section">
+      <div class="diet-day-nav">
+        <button class="cal-arrow" onclick="changeDietDay(-1)">‹</button>
+        <span class="diet-day-lbl" id="diet-day-lbl"></span>
+        <button class="cal-arrow" onclick="changeDietDay(1)">›</button>
+      </div>
+      <div id="diet-type-row" style="margin-bottom:14px"></div>
+      <div id="dieta-content"></div>
+    </div>
+
+    <!-- PROGRESSI -->
+    <div id="sec-prog" class="section">
+      <div class="sec-label">Peso corporeo</div>
+      <div class="pr-block" style="padding:18px 16px;display:flex;align-items:baseline;gap:10px">
+        <span class="peso-big" id="peso-display">—</span>
+        <span style="font-size:16px;color:var(--txt3)">kg</span>
+        <span style="font-size:12px;color:var(--txt3);margin-left:auto">target 73 kg</span>
+      </div>
+      <div class="input-row">
+        <input type="number" step="0.1" placeholder="es. 81.5" id="peso-input" class="text-input">
+        <button class="btn-primary" style="width:auto;margin:0;padding:10px 16px" onclick="logPeso()">Salva</button>
+      </div>
+      <div class="sec-label">Storico peso</div>
+      <div class="pr-block" id="peso-log-list"><div class="empty-state">Nessun dato ancora</div></div>
+      <div class="sec-label">Record personali</div>
+      <div class="pr-block" id="pr-list"><div class="empty-state">Nessun record ancora</div></div>
+      <div class="sec-label">Sessioni completate</div>
+      <div class="pr-block" id="sessioni-log-list"><div class="empty-state">Nessuna sessione ancora</div></div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="sec-settings" class="section">
+      <div class="sec-label">Connessione Google Sheets</div>
+      <div class="config-panel">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+          <i class="ti ti-circle-check" style="font-size:20px;color:var(--acc3)"></i>
+          <span style="font-size:13px;color:var(--txt2)">4 fogli collegati via URL diretto</span>
+        </div>
+        <div style="font-size:11px;color:var(--txt3);line-height:1.8;margin-bottom:12px">
+          DIETA · CALENDARIO · ESERCIZI · SCHEDE<br>
+          Per aggiornare i dati: modifica il foglio Sheets → premi Sync nell'app.
+        </div>
+        <button class="btn-primary" onclick="syncAll()"><i class="ti ti-refresh" style="font-size:14px;vertical-align:-2px"></i> Sincronizza ora</button>
+      </div>
+      <div class="sec-label">Fogli richiesti</div>
+      <div class="pr-block">
+        <div class="pr-row"><span class="pr-label">ESERCIZI</span><span style="font-size:10px;color:var(--txt3)">id, nome, gruppo, attrezzatura, descrizione, youtube_url, categoria</span></div>
+        <div class="pr-row"><span class="pr-label">SCHEDE</span><span style="font-size:10px;color:var(--txt3)">scheda_id, scheda_nome, tipo, esercizio_id, ordine, serie, rip, pausa_sec, note_scheda</span></div>
+        <div class="pr-row"><span class="pr-label">CALENDARIO</span><span style="font-size:10px;color:var(--txt3)">data, tipo, scheda_id, periodo, note</span></div>
+        <div class="pr-row"><span class="pr-label">DIETA</span><span style="font-size:10px;color:var(--txt3)">giorno, tipo_giorno, orario, nome, kcal_stima, proteine_g, carboidrati_g, grassi_g, ordine, note</span></div>
+      </div>
+      <div class="sec-label">Come pubblicare il foglio</div>
+      <div class="pr-block" style="padding:14px 16px">
+        <div style="font-size:12px;color:var(--txt2);line-height:2">
+          1. Apri il foglio su Google Sheets<br>
+          2. File → Condividi → Pubblica sul web<br>
+          3. Ogni foglio → CSV → Pubblica<br>
+          4. Copia l'ID dall'URL e incollalo sopra
+        </div>
+      </div>
+      <div class="sec-label">Stato database</div>
+      <div class="pr-block" id="db-status"><div class="empty-state">—</div></div>
+      <div style="margin-top:16px">
+        <button class="btn-ghost" onclick="clearLocalData()">Cancella dati locali (log e progressi)</button>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn active" onclick="showSection('agenda')" id="nav-agenda"><i class="ti ti-calendar"></i><span>Agenda</span></button>
+    <button class="nav-btn" onclick="showSection('dieta')" id="nav-dieta"><i class="ti ti-salad"></i><span>Dieta</span></button>
+    <button class="nav-btn" onclick="showSection('prog')" id="nav-prog"><i class="ti ti-chart-line"></i><span>Progressi</span></button>
+    <button class="nav-btn" onclick="showSection('settings')" id="nav-settings"><i class="ti ti-settings"></i><span>Setup</span></button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+// ── CONSTANTS ────────────────────────────────────────────────
+const MESI = ['Gennaio','Febbraio','Marzo','Aprile','Maggio','Giugno','Luglio','Agosto','Settembre','Ottobre','Novembre','Dicembre'];
+const GIORNI_IT = ['domenica','lunedi','martedi','mercoledi','giovedi','venerdi','sabato'];
+const GIORNI_LABEL = {lunedi:'Lunedì',martedi:'Martedì',mercoledi:'Mercoledì',giovedi:'Giovedì',venerdi:'Venerdì',sabato:'Sabato',domenica:'Domenica'};
+const DOW_SHORT = ['Lun','Mar','Mer','Gio','Ven','Sab','Dom'];
+const TYPE_COLORS = {boxe:'#6b8cff',gym:'#3affb8',palestra:'#3affb8',crossfit:'#ff6b35',cf:'#ff6b35',recupero:'#505050',riposo:'#505050'};
+const TYPE_LABELS = {boxe:'Boxe',gym:'Palestra',palestra:'Palestra',crossfit:'CrossFit',cf:'CrossFit',recupero:'Recupero',riposo:'Riposo'};
+
+// ── STATE ────────────────────────────────────────────────────
+let DB = null;
+let SHEETS_ID = localStorage.getItem('sheets_id') || '';
+let CACHE = { esercizi:[], schede:[], calendario:[], dieta:[] };
+let calView = 'mese';
+let curYear = new Date().getFullYear();
+let curMonth = new Date().getMonth();
+let curWeekStart = getMonday(new Date());
+let selectedDate = new Date();
+let dietDay = getTodayGiorno();
+let prevSection = 'agenda';
+
+// ── INDEXEDDB ────────────────────────────────────────────────
+function openDB(){
+  return new Promise((res,rej)=>{
+    const req = indexedDB.open('TrainerDB',2);
+    req.onupgradeneeded = e => {
+      const db = e.target.result;
+      ['peso_log','sessioni_log','sheets_cache'].forEach(s=>{
+        if(!db.objectStoreNames.contains(s))
+          db.createObjectStore(s,{keyPath:'id',autoIncrement:s!=='sheets_cache'});
+      });
+    };
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = rej;
+  });
+}
+function dbPut(store,obj){
+  return new Promise((res,rej)=>{
+    const tx = DB.transaction(store,'readwrite');
+    tx.objectStore(store).put(obj).onsuccess = e => res(e.target.result);
+    tx.onerror = rej;
+  });
+}
+function dbGetAll(store){
+  return new Promise((res,rej)=>{
+    const tx = DB.transaction(store,'readonly');
+    tx.objectStore(store).getAll().onsuccess = e => res(e.target.result);
+    tx.onerror = rej;
+  });
+}
+function dbClear(store){
+  return new Promise((res,rej)=>{
+    const tx = DB.transaction(store,'readwrite');
+    tx.objectStore(store).clear().onsuccess = ()=>res();
+    tx.onerror = rej;
+  });
+}
+
+// ── SHEETS SYNC ──────────────────────────────────────────────
+async function fetchSheet(name){
+  const urls = {
+    DIETA:     'https://docs.google.com/spreadsheets/d/e/2PACX-1vR2s0JgtAxiiIkUZEHwRBClKq8V3QweDiL3Btc-5egGX91R1aJ7hgCyH-cFxAGjHESEvLLSiGZbWyBx/pub?output=csv',
+    CALENDARIO:'https://docs.google.com/spreadsheets/d/e/2PACX-1vRMq95kGnM8dTWQFc-j53H42NxYzucsq-kdMSxk1fnw1ziJ5GuWL6ivRmLoEeFX4y4Y_sIHkITZ2KlM/pub?output=csv',
+    ESERCIZI:  'https://docs.google.com/spreadsheets/d/e/2PACX-1vSCDhsAIFuMYJgMqHjizyums7O1lfDCZAwZ2ritaFkSGB0sER37QfYQuUgBbt14NNE6fQScu0Umu8kf/pub?output=csv',
+    SCHEDE:    'https://docs.google.com/spreadsheets/d/e/2PACX-1vThDwSTl6su9tV9xzJSUesHNI6KKg8KQjfbdVzjvgiIqAFokSQsOCFunqrNWUZ5pxNC8Xe7ijpy2qe7/pub?output=csv'
+  };
+  const url = urls[name];
+  if(!url) throw new Error(`URL non configurato per "${name}"`);
+  const r = await fetch(url);
+  if(!r.ok) throw new Error(`Foglio "${name}" non raggiungibile (${r.status})`);
+  return parseCSV(await r.text());
+}
+function parseCSV(text){
+  const lines = text.trim().split('\n');
+  if(lines.length<2) return [];
+  const headers = parseCSVRow(lines[0]).map(h=>h.replace(/^"|"$/g,'').trim());
+  return lines.slice(1).map(line=>{
+    const vals = parseCSVRow(line);
+    const obj = {};
+    headers.forEach((h,i)=>{ obj[h]=(vals[i]||'').replace(/^"|"$/g,'').trim(); });
+    return obj;
+  }).filter(r=>Object.values(r).some(v=>v!==''));
+}
+function parseCSVRow(line){
+  const res=[]; let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){res.push(cur);cur='';}
+    else cur+=c;
+  }
+  res.push(cur); return res;
+}
+async function syncAll(){
+  // URL diretti configurati — sync sempre disponibile
+  const btn=document.getElementById('sync-btn');
+  btn.classList.add('syncing');
+  document.getElementById('sync-label').textContent='Sync...';
+  try{
+    const [esercizi,schede,calendario,dieta] = await Promise.all([
+      fetchSheet('ESERCIZI'),fetchSheet('SCHEDE'),fetchSheet('CALENDARIO'),fetchSheet('DIETA')
+    ]);
+    CACHE={esercizi,schede,calendario,dieta};
+    await dbPut('sheets_cache',{id:'cache',data:CACHE,ts:Date.now()});
+    renderCurrentView();
+    renderDieta();
+    showToast('Dati aggiornati');
+  }catch(e){
+    showToast('Errore: '+e.message);
+  }
+  btn.classList.remove('syncing');
+  document.getElementById('sync-label').textContent='Sync';
+}
+async function loadCachedData(){
+  try{
+    const tx = DB.transaction('sheets_cache','readonly');
+    const cached = await new Promise(res=>{ tx.objectStore('sheets_cache').get('cache').onsuccess=e=>res(e.target.result); });
+    if(cached){ CACHE=cached.data; }
+  }catch(e){}
+}
+
+// ── DATA HELPERS ─────────────────────────────────────────────
+function formatDateISO(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function formatDateIT(d){ return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0'); }
+function sameDay(a,b){ return a.getFullYear()===b.getFullYear()&&a.getMonth()===b.getMonth()&&a.getDate()===b.getDate(); }
+function getDOWIndex(d){ return (d.getDay()+6)%7; }
+function getMonday(d){ const day=d.getDay()||7; return new Date(d.getFullYear(),d.getMonth(),d.getDate()-day+1); }
+function getTodayGiorno(){ return GIORNI_IT[new Date().getDay()]; }
+
+function getCalEntry(date){ return CACHE.calendario.find(r=>r.data===formatDateISO(date))||null; }
+function getDayType(date){ const e=getCalEntry(date); return e?(e.tipo||'recupero'):'recupero'; }
+
+function getSchedaFull(schedaId){
+  const rows = CACHE.schede.filter(r=>r.scheda_id===schedaId).sort((a,b)=>parseInt(a.ordine||0)-parseInt(b.ordine||0));
+  if(!rows.length) return null;
+  return {
+    nome: rows[0].scheda_nome,
+    tipo: rows[0].tipo,
+    esercizi: rows.map(r=>({ ...r, ...(CACHE.esercizi.find(e=>e.id===r.esercizio_id)||{}) }))
+  };
+}
+
+function getDietaGiorno(giorno){
+  return CACHE.dieta
+    .filter(r=>r.giorno===giorno)
+    .sort((a,b)=>parseInt(a.ordine||0)-parseInt(b.ordine||0));
+}
+
+// ── CALENDAR ─────────────────────────────────────────────────
+function renderMonthCal(){
+  const today=new Date();
+  document.getElementById('cal-month-lbl').textContent=MESI[curMonth]+' '+curYear;
+  document.getElementById('topbar-title').textContent=MESI[curMonth]+' '+curYear;
+  const grid=document.getElementById('cal-grid');
+  const dows=Array.from(grid.querySelectorAll('.cal-dow'));
+  grid.innerHTML=''; dows.forEach(d=>grid.appendChild(d));
+  const first=new Date(curYear,curMonth,1);
+  const startDOW=getDOWIndex(first);
+  const dim=new Date(curYear,curMonth+1,0).getDate();
+  const prevD=new Date(curYear,curMonth,0).getDate();
+  for(let i=0;i<startDOW;i++) grid.appendChild(makeDayCell(new Date(curYear,curMonth-1,prevD-startDOW+i+1),true,today));
+  for(let d=1;d<=dim;d++) grid.appendChild(makeDayCell(new Date(curYear,curMonth,d),false,today));
+  const rem=(startDOW+dim)%7===0?0:7-(startDOW+dim)%7;
+  for(let i=1;i<=rem;i++) grid.appendChild(makeDayCell(new Date(curYear,curMonth+1,i),true,today));
+  renderDayCard(selectedDate,'day-detail-mese');
+}
+function makeDayCell(date,other,today){
+  const type=other?null:getDayType(date);
+  const el=document.createElement('div');
+  el.className='cal-day'+(other?' other-month':'')+(sameDay(date,today)?' is-today':'')+(sameDay(date,selectedDate)?' is-selected':'');
+  const num=document.createElement('div'); num.className='cal-day-num'; num.textContent=date.getDate();
+  el.appendChild(num);
+  if(!other&&type&&type!=='recupero'&&type!=='riposo'){
+    const dot=document.createElement('div'); dot.className='cal-dot';
+    dot.style.background=TYPE_COLORS[type]||'#888'; el.appendChild(dot);
+  }
+  const cap=new Date(date);
+  el.onclick=()=>{ selectedDate=cap; renderMonthCal(); };
+  return el;
+}
+function renderWeekView(){
+  const today=new Date();
+  const strip=document.getElementById('week-strip'); strip.innerHTML='';
+  const mon=new Date(curWeekStart),sun=new Date(curWeekStart); sun.setDate(sun.getDate()+6);
+  document.getElementById('week-lbl').textContent=formatDateIT(mon)+' – '+formatDateIT(sun);
+  document.getElementById('topbar-title').textContent='Settimana';
+  for(let i=0;i<7;i++){
+    const day=new Date(curWeekStart); day.setDate(day.getDate()+i);
+    const type=getDayType(day);
+    const col=document.createElement('div'); col.className='wk-col';
+    const dow=document.createElement('div'); dow.className='wk-dow'; dow.textContent=DOW_SHORT[i];
+    const bub=document.createElement('div');
+    bub.className='wk-bub t-'+type+(sameDay(day,today)?' is-today':'')+(sameDay(day,selectedDate)?' is-selected':'');
+    bub.textContent=day.getDate();
+    const cap=new Date(day);
+    bub.onclick=()=>{ selectedDate=cap; renderWeekView(); };
+    col.appendChild(dow); col.appendChild(bub); strip.appendChild(col);
+  }
+  renderDayCard(selectedDate,'day-detail-sett');
+}
+function renderDayCard(date,cid){
+  const c=document.getElementById(cid);
+  const entry=getCalEntry(date);
+  const type=entry?(entry.tipo||'recupero'):'recupero';
+  const badgeClass='db-'+(type.toLowerCase().replace(' ','-'));
+  const dowLabel=DOW_SHORT[getDOWIndex(date)];
+  const scheda=entry?getSchedaFull(entry.scheda_id):null;
+  let html=`<div class="day-card"><div class="day-card-head"><div>
+    <span class="day-badge ${badgeClass}">${TYPE_LABELS[type]||type}</span>
+    <div class="day-card-title">${scheda?scheda.nome:(type==='recupero'||type==='riposo'?'Riposo':'Scheda non assegnata')}</div>
+    <div class="day-card-sub">${dowLabel} ${formatDateIT(date)}${entry&&entry.periodo?' · '+entry.periodo:''}</div>
+  </div>`;
+  if(scheda&&scheda.esercizi.length)
+    html+=`<button class="open-btn" onclick="openScheda('${entry.scheda_id}')">Apri <i class="ti ti-arrow-right" style="font-size:11px;vertical-align:-1px"></i></button>`;
+  html+=`</div>`;
+  if(entry&&entry.note) html+=`<div style="padding:0 16px 12px;font-size:11px;color:var(--txt3);border-bottom:1px solid var(--bdr);font-style:italic">${entry.note}</div>`;
+  if(scheda&&scheda.esercizi.length){
+    html+=`<div class="ex-list">`;
+    scheda.esercizi.forEach(ex=>{
+      const p=[ex.serie?ex.serie+'×':'',ex.rip||'',ex.pausa_sec?'pausa '+ex.pausa_sec+'s':''].filter(Boolean).join(' · ');
+      html+=`<div class="ex-row"><div class="ex-row-name">${ex.nome||ex.esercizio_id}</div><div class="ex-row-params">${p}</div></div>`;
+    });
+    html+=`</div>`;
+  } else {
+    const msg = (type==='recupero'||type==='riposo') ? 'Giorno di riposo' : 'Nessun dato per questa data';
+    html+=`<div class="empty-state">${msg}</div>`;
+  }
+  html+=`</div>`;
+  c.innerHTML=html;
+}
+function changeMonth(dir){ curMonth+=dir; if(curMonth<0){curMonth=11;curYear--;}if(curMonth>11){curMonth=0;curYear++;}renderMonthCal(); }
+function changeWeek(dir){ curWeekStart.setDate(curWeekStart.getDate()+dir*7); renderWeekView(); }
+function setCalView(v){
+  calView=v;
+  document.getElementById('vt-mese').classList.toggle('active',v==='mese');
+  document.getElementById('vt-settimana').classList.toggle('active',v==='settimana');
+  document.getElementById('view-mese').style.display=v==='mese'?'block':'none';
+  document.getElementById('view-settimana').style.display=v==='settimana'?'block':'none';
+  if(v==='mese') renderMonthCal(); else renderWeekView();
+}
+function renderCurrentView(){ if(calView==='mese') renderMonthCal(); else renderWeekView(); }
+
+// ── SCHEDA FULL ───────────────────────────────────────────────
+function openScheda(schedaId){
+  const s=getSchedaFull(schedaId);
+  if(!s){showToast('Scheda non trovata');return;}
+  let html=`<div style="margin-bottom:16px">
+    <span class="day-badge db-${s.tipo}">${TYPE_LABELS[s.tipo]||s.tipo}</span>
+    <div style="font-size:18px;font-weight:500;margin-top:6px">${s.nome}</div>
+  </div>`;
+  s.esercizi.forEach((ex,idx)=>{
+    const p=[ex.serie?ex.serie+' serie':'',ex.rip?'× '+ex.rip+' rip':'',ex.pausa_sec?'pausa '+ex.pausa_sec+'s':''].filter(Boolean).join(' · ');
+    html+=`<div class="ex-card">
+      <div class="ex-card-name">${ex.nome||ex.esercizio_id}</div>
+      <div class="ex-card-params">${p}</div>`;
+    if(ex.descrizione) html+=`<div class="ex-card-desc">${ex.descrizione}</div>`;
+    if(ex.youtube_url) html+=`<a class="ex-card-yt" href="${ex.youtube_url}" target="_blank"><i class="ti ti-brand-youtube" style="font-size:13px"></i> YouTube</a>`;
+    if(ex.note_scheda) html+=`<div style="font-size:11px;color:var(--txt3);margin-top:8px;font-style:italic">${ex.note_scheda}</div>`;
+    const canLog=(s.tipo==='gym'||s.tipo==='palestra'||s.tipo==='cf'||s.tipo==='crossfit');
+    if(canLog) html+=`<div class="log-fields">
+      <div class="log-field"><label>Peso kg</label><input class="log-input" type="number" step="0.5" id="lk${idx}"></div>
+      <div class="log-field"><label>Rip</label><input class="log-input" type="number" id="lr${idx}"></div>
+      <div class="log-field"><label>Note</label><input class="log-input" type="text" id="ln${idx}"></div>
+    </div>`;
+    html+=`</div>`;
+  });
+  html+=`<button class="btn-primary" onclick="saveSessione('${schedaId}','${s.nome}',${s.esercizi.length})"><i class="ti ti-check" style="font-size:14px;vertical-align:-2px"></i> Sessione completata</button>
+  <button class="btn-ghost" onclick="goBack()">‹ Torna all'agenda</button>`;
+  document.getElementById('scheda-content').innerHTML=html;
+  prevSection='agenda';
+  showSection('scheda');
+}
+async function saveSessione(sid,snome,num){
+  const sets=[];
+  for(let i=0;i<num;i++){
+    const kg=document.getElementById('lk'+i)?.value;
+    const rip=document.getElementById('lr'+i)?.value;
+    const note=document.getElementById('ln'+i)?.value;
+    if(kg||rip) sets.push({ex_idx:i,kg,rip,note});
+  }
+  await dbPut('sessioni_log',{id:Date.now(),data:formatDateISO(new Date()),scheda_id:sid,scheda_nome:snome,sets});
+  showToast('Sessione salvata');
+  goBack();
+  renderProgressi();
+}
+function goBack(){ showSection(prevSection||'agenda'); }
+
+// ── DIETA ─────────────────────────────────────────────────────
+function renderDieta(){
+  const pasti=getDietaGiorno(dietDay);
+  const labelEl=document.getElementById('diet-day-lbl');
+  const typeEl=document.getElementById('diet-type-row');
+  labelEl.textContent=GIORNI_LABEL[dietDay]||dietDay;
+
+  // tipo giorno badge
+  const tipo=pasti.length?pasti[0].tipo_giorno:'';
+  typeEl.innerHTML=tipo?`<span class="day-badge db-${tipo}">${TYPE_LABELS[tipo]||tipo}</span>`:'';
+
+  if(!pasti.length){
+    document.getElementById('dieta-content').innerHTML=
+      `<div class="empty-state">Nessun piano dieta per ${GIORNI_LABEL[dietDay]}</div>`;
+    return;
+  }
+  let totKcal=0,totP=0,totC=0,totG=0,html='';
+  pasti.forEach(p=>{
+    totKcal+=parseInt(p.kcal_stima)||0;
+    totP+=parseInt(p.proteine_g)||0;
+    totC+=parseInt(p.carboidrati_g)||0;
+    totG+=parseInt(p.grassi_g)||0;
+    html+=`<div class="meal-card">
+      <div class="meal-orario">${p.orario}</div>
+      <div class="meal-nome">${p.nome}</div>
+      <div class="meal-macros">
+        <div class="macro-pill">P <b>${p.proteine_g}g</b></div>
+        <div class="macro-pill">C <b>${p.carboidrati_g}g</b></div>
+        <div class="macro-pill">G <b>${p.grassi_g}g</b></div>
+        <div class="macro-pill"><b>${p.kcal_stima}</b> kcal</div>
+      </div>
+      ${p.note?`<div class="meal-note">${p.note}</div>`:''}
+    </div>`;
+  });
+  html+=`<div class="totale-row">
+    <span style="font-size:11px;color:var(--txt3)">Totale</span>
+    <span style="font-size:12px;font-weight:500;color:var(--acc)">${totKcal} kcal · P:${totP}g · C:${totC}g · G:${totG}g</span>
+  </div>`;
+  document.getElementById('dieta-content').innerHTML=html;
+}
+function changeDietDay(dir){
+  const giorni=['lunedi','martedi','mercoledi','giovedi','venerdi','sabato','domenica'];
+  let idx=giorni.indexOf(dietDay)+dir;
+  if(idx<0) idx=6; if(idx>6) idx=0;
+  dietDay=giorni[idx];
+  renderDieta();
+}
+
+// ── PROGRESSI ────────────────────────────────────────────────
+async function renderProgressi(){
+  const pesoLogs=await dbGetAll('peso_log');
+  const sessLogs=await dbGetAll('sessioni_log');
+  if(pesoLogs.length){
+    const last=pesoLogs.sort((a,b)=>b.id-a.id)[0];
+    document.getElementById('peso-display').textContent=parseFloat(last.peso).toFixed(1);
+    document.getElementById('peso-log-list').innerHTML=
+      pesoLogs.sort((a,b)=>b.id-a.id).slice(0,10)
+        .map(p=>`<div class="pr-row"><span class="pr-label">${p.data}</span><span class="pr-val">${parseFloat(p.peso).toFixed(1)} kg</span></div>`).join('');
+  }
+  if(sessLogs.length){
+    document.getElementById('sessioni-log-list').innerHTML=
+      sessLogs.sort((a,b)=>b.id-a.id).slice(0,15)
+        .map(s=>`<div class="pr-row"><span class="pr-label">${s.scheda_nome}</span><span style="font-size:11px;color:var(--txt3)">${s.data}</span></div>`).join('');
+    const prMap={};
+    sessLogs.forEach(s=>(s.sets||[]).forEach(set=>{
+      if(set.kg&&set.rip){
+        const k=set.ex_idx+'_'+s.scheda_id;
+        if(!prMap[k]||parseFloat(set.kg)>parseFloat(prMap[k].kg)) prMap[k]={...set,scheda:s.scheda_nome};
+      }
+    }));
+    const prs=Object.values(prMap);
+    if(prs.length)
+      document.getElementById('pr-list').innerHTML=prs.map(p=>`<div class="pr-row"><span class="pr-label">${p.scheda} — ex.${p.ex_idx+1}</span><span class="pr-val">${p.kg}kg × ${p.rip}</span></div>`).join('');
+  }
+}
+async function logPeso(){
+  const v=document.getElementById('peso-input').value;
+  if(!v) return;
+  await dbPut('peso_log',{id:Date.now(),data:formatDateISO(new Date()),peso:v});
+  document.getElementById('peso-input').value='';
+  showToast('Peso salvato'); renderProgressi();
+}
+
+// ── SETTINGS ─────────────────────────────────────────────────
+async function updateDBStatus(){
+  const pl=await dbGetAll('peso_log');
+  const sl=await dbGetAll('sessioni_log');
+  let tsLabel='—';
+  try{
+    const tx=DB.transaction('sheets_cache','readonly');
+    const c=await new Promise(res=>tx.objectStore('sheets_cache').get('cache').onsuccess=e=>res(e.target.result));
+    if(c) tsLabel=Math.round((Date.now()-c.ts)/60000)+' min fa';
+  }catch(e){}
+  document.getElementById('db-status').innerHTML=`
+    <div class="pr-row"><span class="pr-label">Esercizi</span><span class="pr-val">${CACHE.esercizi.length}</span></div>
+    <div class="pr-row"><span class="pr-label">Schede</span><span class="pr-val">${[...new Set(CACHE.schede.map(r=>r.scheda_id))].length}</span></div>
+    <div class="pr-row"><span class="pr-label">Giorni calendario</span><span class="pr-val">${CACHE.calendario.length}</span></div>
+    <div class="pr-row"><span class="pr-label">Pasti dieta</span><span class="pr-val">${CACHE.dieta.length}</span></div>
+    <div class="pr-row"><span class="pr-label">Log peso</span><span class="pr-val">${pl.length}</span></div>
+    <div class="pr-row"><span class="pr-label">Sessioni loggate</span><span class="pr-val">${sl.length}</span></div>
+    <div class="pr-row"><span class="pr-label">Ultimo sync</span><span style="font-size:11px;color:var(--txt3)">${tsLabel}</span></div>`;
+}
+function saveConfig(){
+  const id=document.getElementById('sheets-id').value.trim();
+  if(!id){showToast('Inserisci l\'ID');return;}
+  SHEETS_ID=id; localStorage.setItem('sheets_id',id); syncAll();
+}
+async function clearLocalData(){
+  if(!confirm('Cancellare log peso e sessioni locali?')) return;
+  await dbClear('peso_log'); await dbClear('sessioni_log');
+  showToast('Dati locali cancellati'); renderProgressi();
+}
+
+// ── UI ────────────────────────────────────────────────────────
+function showSection(name){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('sec-'+name).classList.add('active');
+  const nb=document.getElementById('nav-'+name); if(nb) nb.classList.add('active');
+  document.getElementById('scroll-area').scrollTop=0;
+  const titles={agenda:'Agenda',scheda:'Scheda',dieta:'Dieta',prog:'Progressi',settings:'Impostazioni'};
+  if(titles[name]) document.getElementById('topbar-title').textContent=titles[name];
+  if(name==='prog') renderProgressi();
+  if(name==='dieta'){ dietDay=getTodayGiorno(); renderDieta(); }
+  if(name==='settings') updateDBStatus();
+  if(name==='agenda') renderCurrentView();
+}
+let _toastTimer;
+function showToast(msg){
+  const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(_toastTimer); _toastTimer=setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+async function init(){
+  DB=await openDB();
+  if(SHEETS_ID) document.getElementById('sheets-id').value=SHEETS_ID;
+  await loadCachedData();
+  renderMonthCal();
+  dietDay=getTodayGiorno();
+  renderDieta();
+  setTimeout(()=>syncAll(),500); // auto-sync all'avvio
+}
+init();
+</script>
+</body>
+</html>
